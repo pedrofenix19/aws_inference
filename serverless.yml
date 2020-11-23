@@ -1,0 +1,143 @@
+# Welcome to Serverless!
+#
+# This file is the main config file for your service.
+# It's very minimal at this point and uses default values.
+# You can always add more config options for more control.
+# We've included some commented out config examples here.
+# Just uncomment any of them to get that config option.
+#
+# For full config options, check the docs:
+#    docs.serverless.com
+#
+# Happy Coding!
+
+service: pedro-gan-demo
+# app and org for use with dashboard.serverless.com
+# app: moving-motivators
+# org: pedromigueldeniznext
+
+# You can pin your service to only deploy with a specific Serverless version
+# Check out our docs for more details
+# frameworkVersion: "=X.X.X"
+
+provider:
+  name: aws
+  region: eu-west-1
+  runtime: python3.7
+  timeout: 30
+  iamRoleStatements:
+  - Effect: 'Allow'
+    Action:
+      - 'lambda:InvokeFunction'
+    Resource: "*"
+  - Effect: 'Allow'
+    Action:
+      - 's3:ListBucket'
+      - 's3:GetObject'
+      - 's3:PutObject'
+      - 's3:DeleteObject'
+    Resource: "arn:aws:s3:::pedrodeniz-ganbucket"
+
+custom:
+  pythonRequirements:
+    dockerizePip: true
+    dockerRunCmdExtraArgs: ["-v", "${env:PWD}/wheels:/app/wheels"]
+    # layer: true
+    # zip: true
+    # slim: true
+    # noDeploy:
+    #   - boto3
+    #   - botocore
+    #   - docutils
+    #   - jmespath
+    #   - pip
+    #   - python-dateutil
+    #   - s3transfer
+    #   - setuptools
+    #   - six
+    #   - tensorboard
+
+
+# you can overwrite defaults here
+#  stage: dev
+#  region: us-east-1
+
+# you can add statements to the Lambda function's IAM Role here
+#  iamRoleStatements:
+#    - Effect: "Allow"
+#      Action:
+#        - "s3:ListBucket"
+#      Resource: { "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "ServerlessDeploymentBucket" } ] ]  }
+#    - Effect: "Allow"
+#      Action:
+#        - "s3:PutObject"
+#      Resource:
+#        Fn::Join:
+#          - ""
+#          - - "arn:aws:s3:::"
+#            - "Ref" : "ServerlessDeploymentBucket"
+#            - "/*"
+
+# you can define service wide environment variables here
+#  environment:
+#    variable1: value1
+
+# you can add packaging information here
+package:
+ include:
+   - handler.py
+   - model.tflite
+ exclude:
+   - .gitignore
+   - README.md
+   - package.json
+   - package-lock.json
+   - node_modules/**
+   - pedro-gan-demo/**
+   - .venv/**
+   - .vscode/**
+
+functions:
+  get_generated_image:
+    handler: handler.get_image
+    # layers:
+    #   - { Ref: PythonRequirementsLambdaLayer }
+    name: get_image
+    warmup: true
+    events:
+      - http:
+          path: image
+          method: get
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+
+# resources:
+#   Resources:
+#     campaignsTable:
+#       Type: AWS::DynamoDB::Table
+#       Properties:
+#         TableName: campaigns
+#         AttributeDefinitions:
+#           - AttributeName: id
+#             AttributeType: S
+#           - AttributeName: name
+#             AttributeType: S
+#         KeySchema:
+#           - AttributeName: id
+#             KeyType: HASH
+#           - AttributeName: name
+#             KeyType: RANGE
+#         BillingMode: PAY_PER_REQUEST
+
+
+plugins:
+  - serverless-python-requirements
+  - serverless-plugin-warmup
